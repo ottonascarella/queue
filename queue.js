@@ -1,46 +1,43 @@
 /*
 	Queue - A stack of functions with pause, play, resume, delay....
-	Made for fun.
-	Use it as you want.
+	Made for fun. Use it as you want.
 
-	ex: queue(arrayOfFunctionsAndPauses, self);
-
-	q = queue([
-		function(next, i) {
-			console.log(i); // prints 0, the index of the function in the function's array
-		},
-		2000, // adds 2000ms pause
-		function(next, i) {
-			console.log(Date.now - this); // 2000ish (this was set to be Date.now() )
-		}
-	], Date.now() );
-
-
-	q.play() => executes
-	q.pause() => pauses
-	q.resume(index) => resumes at a certain index of the array, or where it got paused(in case of no index given)
-	q.stop() => stops
+	Author: Otto Nascarella
 
 */
 
-(function(window, undefined) {
+(function(global, undefined) {
 	"strict mode";
 
-	function q(array, self) {
+	function isArray(o) {
+		return ( ({}).toString.call(o) === "[object Array]" );
+	}
 
-		var i = -1,
-			l = array.length - 1,
+	function q(self) {
+
+		var index = -1,
+			array = [],
 			timer = null;
 
 
-		self = self || window;
+		self = self || global;
+
+
 
 		/* creates the object that will be returned by queue and its "methods" */
 		var queue = {
+			add: add,
+			delay: delay,
 			resume: resume,
 			pause: pause,
 			play: play,
-			stop: stop
+			stop: stop,
+			get length() {
+				return array.length;
+			},
+			get index() {
+				return index;
+			}
 		};
 
 		/* function that calls next function in the stack */
@@ -51,18 +48,21 @@
 
 			/* use seek to go to a certain function in the queue */
 			if (typeof seek !== 'number') {
-				i++;
+				index++;
 			} else {
-				i = seek;
+				index = seek;
 			}
 
 			/* reached the end of the queue */
-			if (i > l) return;
+			if (index > array.length - 1) {
+				array = [];
+				return;
+			}
 
 			/* negative values normalized */
-			if (i < 0) i += array.length;
+			if (index < 0) i += array.length;
 
-			funk =  array[i];
+			funk =  array[index];
 
 			/* set up timer, if array element is a number */
 			if (typeof funk === 'number') {
@@ -76,9 +76,8 @@
 				};
 			}
 
-
-			/* call the current function with self as this, resume(next) and current position as arguments*/
-			funk.call(self, resume, i);
+			/* call the current function with self as this, resume (next) and current position as arguments*/
+			funk.call(self, resume, index);
 
 			return queue;
 
@@ -90,7 +89,7 @@
 			if (timer !== null) {
 				clearTimeout(timer);
 				timer = null;
-				if (i > -1) i--;
+				if (index > -1) index--;
 			}
 
 			return queue;
@@ -100,7 +99,8 @@
 		/* stops the stack execution */
 		function stop() {
 			clearTimeout(timer);
-			i = -1;
+			index = -1;
+			array = [];
 
 			return queue;
 		}
@@ -113,11 +113,32 @@
 		}
 
 
+		function add(obj) {
+			if ( isArray(obj) ) {
+				for (var j = 0, m = obj.length; j < m; j++) {
+					if (typeof obj[j] === 'number' || typeof obj[j] === 'function') array.push( obj[j] );
+				}
+				return queue;
+			}
+
+			if (typeof obj === 'function') array.push(obj);
+
+			return queue;
+		}
+
+		function delay(time) {
+			if (typeof time === 'number') array.push(time);
+
+			return queue;
+		}
+
+
+
 		return queue;
 
 	}
 
 
-	window.queue = q;
+	global.queue = q;
 
-}(window));
+}).call(null, window);
