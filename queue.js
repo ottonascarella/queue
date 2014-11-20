@@ -13,132 +13,121 @@
 		return ( ({}).toString.call(o) === "[object Array]" );
 	}
 
-	function q(self) {
+	function Queue(self) {
 
-		var index = -1,
-			array = [],
-			timer = null;
+		// in case user forgets to use the new operator
+		if (!(this instanceof Queue)) return new Queue(self);
 
+		this._self = self || global;
+		this._array = [];
+		this._index = -1;
+		this._timer = null;
 
-		self = self || global;
+	}
 
+	Queue.prototype = {
+		constructor: Queue,
 
+		get length() {
+			return this._array.length;
+		},
 
-		/* creates the object that will be returned by queue and its "methods" */
-		var queue = {
-			add: add,
-			delay: delay,
-			resume: resume,
-			pause: pause,
-			play: play,
-			stop: stop,
-			get length() {
-				return array.length;
-			},
-			get index() {
-				return index;
-			}
-		};
+		get index() {
+			return this._index;
+		},
 
-		/* function that calls next function in the stack */
-		function resume(seek) {
-			var funk,
-				time;
-
+		resume: function resume(seek) {
+			var that = this, funk, time;
 
 			/* use seek to go to a certain function in the queue */
-			if (typeof seek !== 'number') {
-				index++;
-			} else {
-				index = seek;
-			}
+			if (typeof seek !== 'number') that._index++;
+			else that._index = seek;
 
 			/* reached the end of the queue */
-			if (index > array.length - 1) {
-				array = [];
+			if (that.index > that.length - 1) {
+				that._array = [];
 				return;
 			}
 
 			/* negative values normalized */
-			if (index < 0) i += array.length;
+			if (that.index < 0) that._index += that.length;
 
-			funk =  array[index];
+			funk = that._array[that.index];
 
-			/* set up timer, if array element is a number */
+			/* set up timer, if element is a number instead of function */
 			if (typeof funk === 'number') {
-				time = funk;
 
+				time = funk;
 				funk = function(resume) {
+
 					/* stores a timer in case pause is needed */
-					timer = setTimeout(function() {
-						resume();
+					that._timer = setTimeout(function() {
+
+						that.resume.call(that);
+
 					}, time);
+
 				};
 			}
 
 			/* call the current function with self as this, resume (next) and current position as arguments*/
-			funk.call(self, resume, index);
+			funk.call(that._self, that.resume.bind(that), that._index);
 
-			return queue;
+			return this;
 
-		}
+		},
 
 		/* pauses the stack execution */
-		function pause() {
+		pause: function pause() {
 
-			if (timer !== null) {
-				clearTimeout(timer);
-				timer = null;
-				if (index > -1) index--;
+			if (this._timer !== null) {
+				clearTimeout(this._timer);
+				this._timer = null;
+				if (this.index > -1) this._index--;
 			}
 
-			return queue;
-		}
-
+			return this;
+		},
 
 		/* stops the stack execution */
-		function stop() {
-			clearTimeout(timer);
-			index = -1;
-			array = [];
+		stop: function stop() {
+			clearTimeout(this._timer);
+			this._index = -1;
+			this._array = [];
 
-			return queue;
-		}
+			return this;
+		},
 
 		/* plays the stack */
-		function play() {
-			clearTimeout(timer);
-			resume(0);
-			return queue;
-		}
+		play: function play() {
+			clearTimeout(this._timer);
+			this.resume(0);
 
+			return this;
+		},
 
-		function add(obj) {
+		add: function add(obj) {
+
 			if ( isArray(obj) ) {
 				for (var j = 0, m = obj.length; j < m; j++) {
-					if (typeof obj[j] === 'number' || typeof obj[j] === 'function') array.push( obj[j] );
+					if (typeof obj[j] === 'number' || typeof obj[j] === 'function') this._array.push( obj[j] );
 				}
-				return queue;
+				return this;
 			}
 
-			if (typeof obj === 'function') array.push(obj);
+			if (typeof obj === 'function') this._array.push(obj);
 
-			return queue;
+			return this;
+		},
+
+		delay: function delay(time) {
+			if (typeof time === 'number') this._array.push(time);
+
+			return this;
 		}
 
-		function delay(time) {
-			if (typeof time === 'number') array.push(time);
+	};
 
-			return queue;
-		}
+	global.Queue = Queue;
 
-
-
-		return queue;
-
-	}
-
-
-	global.queue = q;
-
-}).call(null, window);
+}).call(null, this);
