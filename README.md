@@ -1,7 +1,7 @@
 queue
 =====
 
-proof of concept of a way to execute different async calls in order.
+proof of concept of a way to execute different function calls (async or not) in order.
 
 ```
 ///pass an object (or don't) that all functions will be bound to;
