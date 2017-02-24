@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+<script src="queue.js"></script>
+<script>
+
+  function one(next, data) {
+    console.log('first', this);
+    next(data);
+  }
+
+  function two(next, data) {
+    console.log('two', arguments);
+    next(data);
+  }
+
+  function three(next, data) {
+    console.log('three', arguments);
+    next();
+  }
+
+  var q = new Queue('INITIAL DATA')
+    .add(one)
+    .delay(1000)
+    .add(two)
+    .delay(500)
+    .add(three)
+    .play();
+
+  setTimeout(() => {
+    q.add();
+  }, 3000);
+
+
+</script>
+</body>
+</html>

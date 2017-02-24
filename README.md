@@ -1,4 +1,4 @@
-Queue
+#Queue
 =====
 
 A very light way to avoid "callback hell".
@@ -11,11 +11,8 @@ UMD compliant.
 
 ```
 
-
-const Queue = require('queue');
-
 ///pass object as initial data;
-const q = new Queue({a:1, b:2})
+var q = new Queue({a:1, b:2})
 
     /// add n calls to queue (array)
     .add([
@@ -48,19 +45,21 @@ const q = new Queue({a:1, b:2})
     // starts execution of the queue
     .play()
 
-    // adds another task to the end of the queue
+    // you can add another task to the end of the queue
     .add(function(next, data) {
         console.log(data);
         next();
     });
 
+ 
+##Methods
 
-q.pause();   //pauses execution
-q.play();    //starts queue from index 0;
-q.destroy(); //stops queue. cannot resume;
+q.pause();    //pauses execution
+q.play();     //resumes queue execution
+q.destroy();  //destroys queue
 
-q.size()  // gets size of queue
-q.index() // gets current index of queue
+q.size()      // gets size of queue
+q.index()     // gets current index of queue
 
 
 ```
