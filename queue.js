@@ -4,129 +4,137 @@
 	https://github.com/ottonascarella/queue
 */
 
-(function(global, undefined) {
-	"strict mode";
+(function (root, factory) {
+    if (typeof define === "function" && define.amd) {
+        define([], factory);
+    } else if (typeof exports === "object") {
+        module.exports = factory();
+    } else {
+        root.Queue = factory();
+    }
+}(this, function () {
+
+	'strict mode';
 
 	function isArray(o) {
 		return ( ({}).toString.call(o) === '[object Array]' );
 	}
 
-	function Queue(self) {
+	function toArray(a) {
+		return [].slice.call(a);
+	}
 
-		// in case user forgets to use the new operator
-		if (!(this instanceof Queue)) return new Queue(self);
+	function Queue(data) {
 
-		this._self = self || global;
-		this._array = [];
+		if (!(this instanceof Queue)) return new Queue(data);
+
+		this._data = data || undefined;
+		this._queue = [];
 		this._index = -1;
-		this._timer = null;
+		this._paused = false;
+		this._destroyed = false;
+		this._timer = undefined;
 
 	}
 
 	Queue.prototype = {
-		
+
 		constructor: Queue,
 
-		get length() {
-			return this._array.length;
+		get size() {
+			return this._queue.length;
 		},
 
 		get index() {
 			return this._index;
 		},
 
-		resume: function resume(seek) {
-			var that = this, funk, time;
+		_next: function _next(data) {
 
-			/* use seek to go to a certain function in the queue */
-			if (typeof seek !== 'number') that._index++;
-			else that._index = seek;
+			if (this.index + 1 >= this.size) return;
 
-			/* reached the end of the queue */
-			if (that.index > that.length - 1) {
-				that._array = [];
+			if (this._paused) {
+				this._data = data;
 				return;
 			}
 
-			/* negative values normalized */
-			if (that.index < 0) that._index += that.length;
+			this._index++;
+			this._queue[this.index]
+							.call(null, this._next.bind(this), data);
 
-			funk = that._array[that.index];
+		},
 
-			/* set up timer, if element is a number instead of function */
-			if (typeof funk === 'number') {
+		add: function add(stuff) {
+			var that = this;
 
-				time = funk;
-				funk = function(resume) {
+			if (this._destroyed) return;
 
-					/* stores a timer in case pause is needed */
-					that._timer = setTimeout(function() {
-
-						that.resume.call(that);
-
-					}, time);
-
-				};
+			if (typeof stuff === 'function') {
+				this._queue.push( stuff );
+				return this;
 			}
 
-			/* call the current function with self as this, resume (next) and current position as arguments*/
-			funk.call(that._self, that.resume.bind(that), that._index);
+			// if reached here and not array, exit
+			if ( !isArray(stuff) ) return this;
+
+			for (var i = 0, m = stuff.length; i < m; i++) {
+
+				switch (typeof stuff[i]) {
+					case 'number':
+						this.delay( stuff[i] )
+						break;
+
+					case 'function':
+						this._queue.push( stuff[i] )
+						break;
+				}
+
+			}
 
 			return this;
+		},
 
+		/* starts execution */
+		play: function play() {
+			if (this._destroyed) return;
+
+			this._paused = false;
+			this._next(this._data);
+			return this;
 		},
 
 		/* pauses the queue execution */
 		pause: function pause() {
-
-			if (this._timer !== null) {
-				clearTimeout(this._timer);
-				this._timer = null;
-				if (this.index > -1) this._index--;
-			}
-
+			clearTimeout(this._timer);
+			this._paused = true;
 			return this;
 		},
 
 		/* destroys the queue execution */
 		destroy: function destroy() {
-			clearTimeout(this._timer);
+			this.pause();
+			this._queue = [];
+			this._data = undefined;
 			this._index = -1;
-			this._array = [];
-
-			return this;
-		},
-
-		/* plays the stack */
-		play: function play() {
-			clearTimeout(this._timer);
-			this.resume(0);
-
-			return this;
-		},
-
-		add: function add(obj) {
-
-			if ( isArray(obj) ) {
-				for (var j = 0, m = obj.length; j < m; j++) {
-					if (typeof obj[j] === 'number' || typeof obj[j] === 'function') this._array.push( obj[j] );
-				}
-				return this;
-			}
-
-			if (typeof obj === 'function') this._array.push(obj);
-
+			this._paused = false;
+			this._destroyed = true;
 			return this;
 		},
 
 		delay: function delay(time) {
-			if (typeof time === 'number') this._array.push(time);
+			var that = this;
+
+			this.add(function(next, data) {
+				that._timer = setTimeout(function() {
+					if (typeof next == 'function') next(data);
+				}, time);
+			});
 
 			return this;
 		}
 
-	};
+	}; // prototype
 
-	global.Queue = Queue;
+    return Queue;
 
-}).call(null, this);
+}));
