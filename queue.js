@@ -1,16 +1,14 @@
 /*
-	Queue - A stack of functions with pause, play, resume, delay....
-	Made for fun. Use it as you want.
-
-	Author: Otto Nascarella
-
+	queue.js
+	Otto Nascarella
+	https://github.com/ottonascarella/queue
 */
 
 (function(global, undefined) {
 	"strict mode";
 
 	function isArray(o) {
-		return ( ({}).toString.call(o) === "[object Array]" );
+		return ( ({}).toString.call(o) === '[object Array]' );
 	}
 
 	function Queue(self) {
@@ -26,6 +24,7 @@
 	}
 
 	Queue.prototype = {
+		
 		constructor: Queue,
 
 		get length() {
@@ -77,7 +76,7 @@
 
 		},
 
-		/* pauses the stack execution */
+		/* pauses the queue execution */
 		pause: function pause() {
 
 			if (this._timer !== null) {
@@ -89,8 +88,8 @@
 			return this;
 		},
 
-		/* stops the stack execution */
-		stop: function stop() {
+		/* destroys the queue execution */
+		destroy: function destroy() {
 			clearTimeout(this._timer);
 			this._index = -1;
 			this._array = [];
