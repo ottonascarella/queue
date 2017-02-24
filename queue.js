@@ -41,17 +41,17 @@
 
 		constructor: Queue,
 
-		get size() {
+		size: function size() {
 			return this._queue.length;
 		},
 
-		get index() {
+		index: function index() {
 			return this._index;
 		},
 
 		_next: function _next(data) {
 
-			if (this.index + 1 >= this.size) return;
+			if (this.index() + 1 >= this.size()) return;
 
 			if (this._paused) {
 				this._data = data;
@@ -59,7 +59,7 @@
 			}
 
 			this._index++;
-			this._queue[this.index]
+			this._queue[this.index()]
 							.call(null, this._next.bind(this), data);
 
 		},
