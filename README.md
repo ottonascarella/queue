@@ -1,9 +1,9 @@
-#Queue
+Queue
 =====
 
 A very light way to avoid "callback hell".
 
-Play and pause execution.
+Play, delay and pause execution.
 
 ECMAScript 3 compliant.
 
@@ -18,7 +18,7 @@ var q = new Queue({a:1, b:2})
     .add([
 
         function(next, data) {
-          console.log(data) // outputs object that was passed as argument to queue (line 9)
+          console.log(data) // logs object that was passed as argument to the constructor
           next('second data'); // calls next one on the stack;
         },
 
@@ -27,7 +27,7 @@ var q = new Queue({a:1, b:2})
 
 
         function(next, data) {
-          console.log(data); // outputs 'second data'
+          console.log(data); // logs 'second data'
           next({a:1, b:2});
         }
 
